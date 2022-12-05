@@ -21,7 +21,7 @@ class AmazonSalesSourceIngestor(BaseIngestor):
 
     def __init__(self):
         csv_path = os.path.join(
-            "data/cleaned_source/all_sales_data_combined_20221204_160433.csv"
+            "data/cleaned_source/all_sales_data.csv"
         )
         self.data = pd.read_csv(csv_path)
 
