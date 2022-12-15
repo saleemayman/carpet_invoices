@@ -20,9 +20,7 @@ def parse_sales_data_from_amazon_source_csvs() -> dict:
         country_code = folder_path.split("/")[-1]
 
         if len(country_code) != 2 or ".DS_Store" in folder_path:
-            logging.warning(
-                f"Not a valid country folder, not parsing. folder path: {folder_path}"
-            )
+            logging.warning(f"Not a valid country folder, not parsing. folder path: {folder_path}")
             continue
 
         country_sales_data = {}
@@ -44,9 +42,7 @@ def parse_sales_data_from_amazon_source_csvs() -> dict:
             data = data[COUNTRY_TO_COLUMNS_MAPPING[country_code].keys()].copy()
             data.rename(columns=COUNTRY_TO_COLUMNS_MAPPING[country_code], inplace=True)
             data["country_code"] = country_code
-            data["date_time"] = data["date_time_original"].apply(
-                lambda date: dateparser.parse(date)
-            )
+            data["date_time"] = data["date_time_original"].apply(lambda date: dateparser.parse(date))
             assert (
                 data["date_time_original"].count() == data["date_time"].count()
             ), f"Could not convert all dates for: {country_code}."
@@ -58,9 +54,7 @@ def parse_sales_data_from_amazon_source_csvs() -> dict:
 
     all_data = {}
     for country_code in sales_data.keys():
-        if sales_data[country_code]["csv_count"] != len(
-            sales_data[country_code]["files"]
-        ):
+        if sales_data[country_code]["csv_count"] != len(sales_data[country_code]["files"]):
             raise Exception(
                 f"Number of files does not match csv_count. country: {country_code}"
                 f"""number of files: {sales_data[country_code]["files"]}"""
@@ -91,9 +85,7 @@ def parse_sales_data_from_amazon_source_csvs() -> dict:
             continue
         else:
             yearly_data_df = pd.concat(yearly_data) if yearly_data else pd.DataFrame()
-            monthly_data_df = (
-                pd.concat(monthly_data) if monthly_data else pd.DataFrame()
-            )
+            monthly_data_df = pd.concat(monthly_data) if monthly_data else pd.DataFrame()
 
         total_data_count = len(yearly_data_df) + len(monthly_data_df)
         if row_counts != total_data_count:
@@ -121,6 +113,7 @@ if __name__ == "__main__":
         "order_id",
         "sku",
         "quantity",
+        "total",
         "marketplace",
         "fulfilment",
         "source_file",
@@ -139,10 +132,8 @@ if __name__ == "__main__":
     logging.info(f"Final DF column counts: {all_global_data_df.count()}")
     print(f"Final DF column counts: {all_global_data_df.count()}")
 
-    all_global_data_df["uid"] = all_global_data_df.apply(
-        lambda row: create_int_hash_from_df_row(row), axis=1
-    )
+    all_global_data_df["uid"] = all_global_data_df.apply(lambda row: create_int_hash_from_df_row(row), axis=1)
     all_global_data_df[needed_columns].to_csv(
-        path_or_buf=os.path.join(os.getcwd(), "data", "cleaned_source", filename),
+        path_or_buf=os.path.join(os.getcwd(), "data", "amazon_sales", filename),
         index=False,
     )
