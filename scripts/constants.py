@@ -182,3 +182,44 @@ vat_amount_regx = re.compile(
 
 # invoice total with vat
 invoice_total_regx = re.compile(r"^Gesamtbetrag\s(?:€\s)?((?:-)?[\.0-9]{1,6},[0-9]{2})(?:\s€)?.*$")
+
+
+# column mapping for RgExport invoice files
+MONTHLY_INVOICE_COLUMN_MAPPING = {
+    "Satzart": "record_type",
+    "Belegnummer": "invoice_number",
+    "Währung ISO": "currency",
+    "Gesamtsumme": "total",
+    "Guthaben Gutschein": "credit_voucher",
+    "Versandart Auftrag": "shipping_method_order",
+    "Erstelldatum Rechnung": "invoice_create_date",
+    "Zahlungsart Auftrag": "payment_method_order",
+    "Datum letzte Zahlung": "date_last_payment",
+    "Zahlbetrag gesamt": "total_payment_amount",
+    "Gesamtsumme Rechnungskorrektur": "total_invoice_correction",
+    "Kundennummer Auftrag": "customer_number_order",
+    "Auftragsnummer": "order_number",
+    "Erstelldatum Auftrag": "order_create_date",
+    "Externe Auftragsnummer": "external_order_number",
+    "Plattform": "platform",
+    "Versandart Erstes Paket": "shipping_method_first_package",
+    "Sendungsnummer Erstes Paket": "tracking_number_first_package",
+    "Versanddatum Erstes Paket": "date_shipment_first_package",
+}
+
+MONTHLY_REIMBURSEMENT_COLUMN_MAPPING = {
+    "Satzart": "record_type",
+    "Belegnummer": "reimbursement_number",
+    "Währung ISO": "currency",
+    "Gesamtsumme Rechnungskorrektur": "total_invoice_correction",
+    "Gesamtsumme Auftrag": "total_order",
+    "Versandart Auftrag": "shipping_method_order",
+    "Erstelldatum Rechnung": "invoice_create_date",
+    "Zahlungsart Auftrag": "payment_method_order",
+    "Kundennummer Auftrag": "customer_number_order",
+    "Auftragsnummer": "order_number",
+    "Erstelldatum Auftrag": "order_create_date",
+    "Externe Auftragsnummer": "external_order_number",
+    "Plattform": "platform",
+    "Rechnungsnummer": "invoice_number",
+}

@@ -9,6 +9,8 @@ RUN apt-get install curl -y
 # set working directory
 WORKDIR /ingestor
 
+ENV PYTHONPATH "${PYTHONPATH}:/ingestor"
+
 # copy project files.
 COPY . .
 RUN pip install -r requirements.txt

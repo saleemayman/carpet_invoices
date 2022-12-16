@@ -11,6 +11,8 @@ from dataclasses import dataclass
 import pandas as pd
 import pypdfium2 as pdfium
 from constants import (
+    MONTHLY_INVOICE_COLUMN_MAPPING,
+    MONTHLY_REIMBURSEMENT_COLUMN_MAPPING,
     invoice_date_regx,
     standard_row_all_7_columns_regx,
     incomplete_row_4_columns_regx,
@@ -30,6 +32,7 @@ from constants import (
     amazon_order_nr_regx,
     ebay_order_nr_regx,
 )
+from utils.common import create_int_hash_from_df_row
 
 import logging
 
@@ -38,7 +41,6 @@ logger = logging.getLogger()
 INVOICES_DIR = "/home/as/work/tara_data_backup/TaraCarpetRugs/Rechnungen_TaraCarpet"
 
 
-# extract invoice items from pdf text if above failed
 INVOICE_TABLE_COLUMNS = {
     "pos": "item_nr",
     "menge": "quantity",
@@ -64,8 +66,8 @@ def parse_external_invoices_folder() -> dict:
     │   └── many PDF files  # invoice table to be extracted from each
     ├── RE
     │   └── many PDF files  # invoice table to be extracted from each
-    ├── GSExport.xlsx
-    ├── RGExport.xlsx
+    ├── GSExport.xlsx/.csv
+    ├── RGExport.xlsx/.csv
     └── random_other_file
     The function will parse all monthly folders and all filepaths found while walking
     the folders - all files except system files (.DS_Store). Returns a dict as follows:
@@ -81,8 +83,8 @@ def parse_external_invoices_folder() -> dict:
     for folder in invoices_data_folders:
         path_items = folder.split("/")
         starting_location = path_items.index("Rechnungen_TaraCarpet")
-        folder_path_name = "/".join(path_items[starting_location + 1:])
-        path_identifiers = path_items[starting_location + 1:]  # starting+1 till end
+        folder_path_name = "/".join(path_items[starting_location + 1 :])
+        path_identifiers = path_items[starting_location + 1 :]  # starting+1 till end
         folder_files = os.listdir(folder)
         if len(path_identifiers) > 0 and len(path_identifiers) < 3:
             folders_metadata[folder_path_name] = {
@@ -371,7 +373,7 @@ def get_invoice_reimbursement_table_from_extracted_text(
         }
 
 
-def consolidate_extracted_data_into_df(extracted_data: dict, file_metadata: dict, file_name: str):
+def add_metadata_to_extracted_data(extracted_data: dict, file_metadata: dict, file_name: str):
     table_data = extracted_data["table_data"]
     table_data["filename"] = file_name
     table_data["file_type"] = file_metadata["type"]
@@ -401,14 +403,15 @@ def parse_monthly_pdfs_in_folder(folder_name: str, list_of_files: list):
                 file_name,
                 pdf_text_lines,
             )
-            table_data = consolidate_extracted_data_into_df(extracted_data, file_metadata, file_name)
+            table_data = add_metadata_to_extracted_data(extracted_data, file_metadata, file_name)
             invoice_tables_list.append(table_data)
         else:
-            print(f"Not parsing non PDF file: {filename}")
+            print(f"Not parsing non PDF file: {file_name}")
     # combine all DFs and save as CSV
     if len(invoice_tables_list) > 0:
         combined_data = pd.concat(invoice_tables_list)
         if not combined_data.empty:
+            combined_data["hash_id"] = combined_data.apply(lambda row: create_int_hash_from_df_row(row), axis=1)
             combined_data.to_csv(
                 path_or_buf=os.path.join(
                     os.getcwd(),
@@ -422,20 +425,65 @@ def parse_monthly_pdfs_in_folder(folder_name: str, list_of_files: list):
         warnings.warn(f"No files found to parse data. folder_name: {folder_name}")
 
 
+def parse_monthly_parent_folder(folder_name: str, list_of_files: List[str]):
+    def save_invoice_reimbursement_data_as_clean_csv(
+        folder: str,
+        file: str,
+        monthly_df: pd.DataFrame,
+    ):
+        file = file.replace(" ", "_").replace("-", "")
+        print(f"""File columns: {"_".join(sorted(monthly_df.columns))}""")
+        if "rgexport" in file.lower():
+            monthly_df.rename(columns=MONTHLY_INVOICE_COLUMN_MAPPING, inplace=True)
+            monthly_df = monthly_df[MONTHLY_INVOICE_COLUMN_MAPPING.values()].copy()
+        elif "gsexport" in file.lower():
+            monthly_df.rename(columns=MONTHLY_REIMBURSEMENT_COLUMN_MAPPING, inplace=True)
+            monthly_df = monthly_df[MONTHLY_REIMBURSEMENT_COLUMN_MAPPING.values()].copy()
+        else:
+            print(f"Unknown file type. Should be invoice or reimbursement. File: {file}")
+        # create hash for each row from all concatenated column values in the row.
+        monthly_df["hash_id"] = monthly_df.apply(lambda row: create_int_hash_from_df_row(row), axis=1)
+        Path(os.path.join(os.getcwd(), "data/external_invoices/", folder)).mkdir(parents=True, exist_ok=True)
+        csv_out_path = os.path.join(
+            os.getcwd(), "data/external_invoices/", folder, folder + "_" + os.path.splitext(file)[0] + "_cleaned.csv"
+        )
+        monthly_df.to_csv(csv_out_path, index=False)
+
+    for filename in list_of_files:
+        file_path = os.path.join(INVOICES_DIR, folder_name, filename)
+        if "rgexport" in filename.lower() or "gsexport" in filename.lower():
+            print(f"Will be reading monthly file at: {file_path}")
+            if ".xl" in filename.lower():
+                monthly_invoice = pd.read_excel(
+                    file_path,
+                    sheet_name=None,
+                )
+                if len(monthly_invoice) > 0:
+                    file_tables = []
+                    for sheet_name, excel_table_df in monthly_invoice.items():
+                        file_tables.append(excel_table_df)
+                    monthly_df = pd.concat(file_tables)
+                    save_invoice_reimbursement_data_as_clean_csv(folder_name, filename, monthly_df)
+                else:
+                    warnings.warn(f"No table found in Excel file: {filename}, path: {file_path}")
+            elif ".csv" in filename.lower():
+                monthly_df = pd.read_csv(file_path)
+                save_invoice_reimbursement_data_as_clean_csv(folder_name, filename, monthly_df)
+            else:
+                raise Exception(f"Invoice or reimbursement file neither Excel nor CSV. File: {filename}")
+        else:
+            print(f"Unknown filename: {filename}. Not parsing.")
+
+
 if __name__ == "__main__":
     folders_metadata = parse_external_invoices_folder()
     print(f"folders_metadata.keys: {folders_metadata.keys()}")
-
     for folder_identifier, folder_metadata in folders_metadata.items():
-        print(f"folder: {folder_identifier}, folder_metadata.keys: {folder_metadata.keys()}")
-        if folder_identifier:
-            if "RE" in folder_identifier or "GS" in folder_identifier:
-                parse_monthly_pdfs_in_folder(folder_identifier, folder_metadata["files"])
-            else:
-                for filename in folder_metadata["files"]:
-                    if ".xl" in filename.lower():
-                        pass
-                        # TODO: read file
-                    elif ".csv" in filename.lower():
-                        pass
-                        # TODO: read file
+        if len(folder_identifier) > 0 and "archive" not in folder_identifier:
+            print(f"""folder: {folder_identifier}, num_files: {folder_metadata["num_files"]}""")
+            if folder_identifier:
+                if "RE" in folder_identifier or "GS" in folder_identifier:
+                    parse_monthly_pdfs_in_folder(folder_identifier, folder_metadata["files"])
+                else:
+                    parse_monthly_parent_folder(folder_identifier, folder_metadata["files"])
+                    # print(f"Not an invoice (RE) or reimbursement (GS) folder. Skipping: {folder_identifier}")

@@ -6,6 +6,10 @@ import logging
 import dateparser
 import datetime
 
+# TODO: add data parallelisation.
+# from multiprocessing import Pool
+# pool = Pool()
+
 from constants import AMAZON_SALES_DATA_DIR, COUNTRY_TO_COLUMNS_MAPPING
 from utils.common import create_int_hash_from_df_row
 
@@ -33,6 +37,7 @@ def parse_sales_data_from_amazon_source_csvs() -> dict:
         for country_filename in os.listdir(folder_path):
             if ".DS_Store" in country_filename:
                 continue
+            print(f"\tFile: {country_filename}")
 
             data = pd.read_csv(
                 os.path.join(AMAZON_SALES_DATA_DIR, folder_path, country_filename),
@@ -105,7 +110,7 @@ def parse_sales_data_from_amazon_source_csvs() -> dict:
 
 if __name__ == "__main__":
     needed_columns = [
-        "uid",
+        "hash_id",
         "date_time_original",
         "date_time",
         "settlement_id",
@@ -132,8 +137,10 @@ if __name__ == "__main__":
     logging.info(f"Final DF column counts: {all_global_data_df.count()}")
     print(f"Final DF column counts: {all_global_data_df.count()}")
 
-    all_global_data_df["uid"] = all_global_data_df.apply(lambda row: create_int_hash_from_df_row(row), axis=1)
+    all_global_data_df["hash_id"] = all_global_data_df.apply(lambda row: create_int_hash_from_df_row(row), axis=1)
+    output_csv_path = os.path.join(os.getcwd(), "data", "amazon_sales", filename)
+    print(f"Saving file to: {output_csv_path}")
     all_global_data_df[needed_columns].to_csv(
-        path_or_buf=os.path.join(os.getcwd(), "data", "amazon_sales", filename),
+        path_or_buf=output_csv_path,
         index=False,
     )

@@ -16,6 +16,10 @@ services:
       resources:
         limits:
           cpus: '2.00'
+          memory: 2G
+        reservations:
+          cpus: '1.00'
+          memory: 1G
     volumes:
       - postgres_data:/var/lib/postgresql/data
     expose:
@@ -38,6 +42,14 @@ services:
       - app_network
     ports:
       - "5000:5000"
+    deploy:
+      resources:
+        limits:
+          cpus: '3.00'
+          memory: 6G
+        reservations:
+          cpus: '2.00'
+          memory: 3G
     depends_on:
       - postgres
     env_file:
@@ -52,6 +64,14 @@ services:
       - "3000:3000"
     volumes:
       - ./metabase-data:/metabase-data
+    deploy:
+      resources:
+        limits:
+          cpus: '2.00'
+          memory: 3G
+        reservations:
+          cpus: '1.00'
+          memory: 2G
     depends_on:
       - ingestor
     environment:
