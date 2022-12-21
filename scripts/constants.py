@@ -10,7 +10,9 @@ def set_python_path():
 
 
 PARENT_DIR = os.path.abspath(os.pardir)  # tara/
-AMAZON_SALES_DATA_DIR = os.path.join(os.getcwd(), "../tara_data_backup", "TaraCarpetRugs", "Transaktionen_Amazon")
+AMAZON_SALES_DATA_DIR = os.path.join(
+    os.getcwd(), "../tara_data_backup", "TaraCarpetRugs", "Transaktionen_Amazon"
+)
 
 COUNTRY_TO_COLUMNS_MAPPING = {
     "UK": {
@@ -22,7 +24,7 @@ COUNTRY_TO_COLUMNS_MAPPING = {
         "quantity": "quantity",
         "marketplace": "marketplace",
         "fulfilment": "fulfilment",
-        "total": "total",
+        "total": "total_price",
     },
     "NL": {
         "datum/tijd": "date_time_original",
@@ -33,7 +35,7 @@ COUNTRY_TO_COLUMNS_MAPPING = {
         "aantal": "quantity",
         "marketplace": "marketplace",
         "fulfillment": "fulfilment",
-        "totaal": "total",
+        "totaal": "total_price",
     },
     "FR": {
         "date/heure": "date_time_original",
@@ -44,7 +46,7 @@ COUNTRY_TO_COLUMNS_MAPPING = {
         "quantité": "quantity",
         "Marketplace": "marketplace",
         "traitement": "fulfilment",
-        "total": "total",
+        "total": "total_price",
     },
     "SE": {
         "datum/tid": "date_time_original",
@@ -55,7 +57,7 @@ COUNTRY_TO_COLUMNS_MAPPING = {
         "antal": "quantity",
         "marknadsplats": "marketplace",
         "leverans": "fulfilment",
-        "totalt": "total",
+        "totalt": "total_price",
     },
     "IT": {
         "Data/Ora:": "date_time_original",
@@ -66,7 +68,7 @@ COUNTRY_TO_COLUMNS_MAPPING = {
         "Quantità": "quantity",
         "Marketplace": "marketplace",
         "Gestione": "fulfilment",
-        "totale": "total",
+        "totale": "total_price",
     },
     "DE": {
         "Datum/Uhrzeit": "date_time_original",
@@ -77,7 +79,7 @@ COUNTRY_TO_COLUMNS_MAPPING = {
         "Menge": "quantity",
         "Marketplace": "marketplace",
         "Versand": "fulfilment",
-        "Gesamt": "total",
+        "Gesamt": "total_price",
     },
     "PL": {
         "data/godzina": "date_time_original",
@@ -88,7 +90,7 @@ COUNTRY_TO_COLUMNS_MAPPING = {
         "ilość": "quantity",
         "rynek": "marketplace",
         "realizacja": "fulfilment",
-        "suma": "total",
+        "suma": "total_price",
     },
     "ES": {
         "fecha y hora": "date_time_original",
@@ -99,7 +101,7 @@ COUNTRY_TO_COLUMNS_MAPPING = {
         "cantidad": "quantity",
         "web de Amazon": "marketplace",
         "gestión logística": "fulfilment",
-        "total": "total",
+        "total": "total_price",
     },
 }
 
@@ -120,9 +122,9 @@ invoice_date_regx = re.compile(r"^([0-9]{2}\.[0-9]{2}\.[0-9]{4})$")
 standard_row_all_7_columns_regx = re.compile(
     r"^([0-9]{1,3})"  # item_nr
     r"\s([0-9]{1,3}(?:\s[stück]{3,5})?)"  # quantity
-    r"\s([0-9]{5}\-[0-9]{2}\-[0-9]{2}|H[0-9]{5}|[^\s]+)"  # article_nr
-    # r"\s(.*(?=\s[0-9]{1,2}(?:,00)?%))"    # description
-    r"\s(.*(?=(?:\s[0-9]{1,2}(?:,00)?%)?\s(?:-)?[\.0-9]{1,6},[0-9]{2}))"  # description
+    r"\s([0-9]{5}\-[0-9]{2}\-[0-9]{2}|H[0-9]{5}|[^\s]+(?=\s))"  # article_nr
+    r"\s(.*?(?=\s[0-9]{1,2}(?:,00)?%))"  # description
+    # r"\s(.*?(?=(?:\s[0-9]{1,2}(?:,00)?%)?\s(?:-)?[\.0-9]{1,6},[0-9]{2}))"  # description
     # r"\s([0-9]{1,2}(?:,00)?%)"    # vat
     r"(?:\s([0-9]{1,2}(?:,00)?%))?"  # vat
     r"\s((?:-)?[\.0-9]{1,6},[0-9]{2})"  # item_price
@@ -142,7 +144,7 @@ only_article_or_description_in_row_regx = re.compile(
     r"^([0-9]{1,3})"  # item_nr
     r"\s([0-9]{1,3}(?:\s[stück]{3,5})?)"  # quantity
     # r"\s(.*(?=\s[0-9]{1,2}(?:,00)?%))"    # article_nr or description
-    r"\s(.*(?=(?:\s[0-9]{1,2}(?:,00)?%)?\s(?:-)?[\.0-9]{1,6},[0-9]{2}))"  # description
+    r"\s(.*?(?=(?:\s[0-9]{1,2}(?:,00)?%)?\s(?:-)?[\.0-9]{1,6},[0-9]{2}))"  # description
     # r"\s([0-9]{1,2}(?:,00)?%)"    # vat
     r"(?:\s([0-9]{1,2}(?:,00)?%))?"  # vat
     r"\s((?:-)?[\.0-9]{1,6},[0-9]{2})"  # item_price
@@ -164,7 +166,9 @@ remaining_description_row_regx = re.compile(r"^(?:(?!.*%).*)$")
 
 # incomplete row: final 3 columns
 incomplete_row_last_3_columns_regx = re.compile(
-    r"^([0-9]{1,2}(?:,00)?%)" r"\s((?:-)?[\.0-9]{1,6},[0-9]{2})" r"\s((?:-)?[\.0-9]{1,6},[0-9]{2})$"
+    r"^([0-9]{1,2}(?:,00)?%)"
+    r"\s((?:-)?[\.0-9]{1,6},[0-9]{2})"
+    r"\s((?:-)?[\.0-9]{1,6},[0-9]{2})$"
 )
 
 # invoice net total or end
@@ -181,7 +185,9 @@ vat_amount_regx = re.compile(
 )
 
 # invoice total with vat
-invoice_total_regx = re.compile(r"^Gesamtbetrag\s(?:€\s)?((?:-)?[\.0-9]{1,6},[0-9]{2})(?:\s€)?.*$")
+invoice_total_regx = re.compile(
+    r"^Gesamtbetrag\s(?:€\s)?((?:-)?[\.0-9]{1,6},[0-9]{2})(?:\s€)?.*$"
+)
 
 
 # column mapping for RgExport invoice files
@@ -207,6 +213,7 @@ MONTHLY_INVOICE_COLUMN_MAPPING = {
     "Versanddatum Erstes Paket": "date_shipment_first_package",
 }
 
+# column mapping for GsExport invoice files
 MONTHLY_REIMBURSEMENT_COLUMN_MAPPING = {
     "Satzart": "record_type",
     "Belegnummer": "reimbursement_number",

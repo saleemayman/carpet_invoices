@@ -16,12 +16,13 @@ services:
       resources:
         limits:
           cpus: '2.00'
-          memory: 2G
+          memory: 3G
         reservations:
           cpus: '1.00'
-          memory: 1G
+          memory: 2G
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # command: ["postgres", "-c", "log_statement=all"]
     expose:
       - "5432"
     ports:
@@ -45,17 +46,17 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '3.00'
-          memory: 6G
-        reservations:
           cpus: '2.00'
+          memory: 4G
+        reservations:
+          cpus: '1.00'
           memory: 3G
     depends_on:
       - postgres
     env_file:
       - ".env.sh"
-    command: bash -c "echo 'inside data_ingestor container.'  &&  python3 entry_point.py"
-    # command: ["bin/wait_for_postgres.sh", "bash", "python3", "app.py"]
+    # command: bash -c "echo 'inside data_ingestor container.' && sleep 200"
+    command: bash -c "echo 'inside data_ingestor container.' && python3 entry_point.py"
 
   dashboard:
     image: metabase/metabase

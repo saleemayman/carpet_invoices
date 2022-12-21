@@ -1,3 +1,9 @@
+amazon-data:
+	python3 scripts/amazon_raw_sales_data.py
+
+external-data:
+	python3 scripts/external_invoices_reimbursements.py
+
 run-all: ingestor dashboard
 
 database:

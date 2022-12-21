@@ -3,7 +3,8 @@ import logging
 import pandas as pd
 
 from database.tables import AmazonSalesTable, SourceMetaDataTable
-from database.base import engine
+
+# from database.base import engine
 from definitions.schemas import Schemas
 
 from definitions.common import SourceTypes, SourceNames
@@ -16,16 +17,22 @@ logger = logging.getLogger()
 
 class AmazonSalesSourceIngestor(BaseIngestor):
     table_name = AmazonSalesTable.__tablename__
-    source_type = SourceTypes.csv.value
+    source_type = SourceTypes.original_csv.value
     source_name = SourceNames.amazon_aws.value
 
-    def __init__(self):
+    def __init__(self, engine):
+        print("Starting data ingestor for Amazon sales data...")
         csv_path = os.path.join(
-            "data/amazon_sales/all_sales_data.csv"
+            os.getcwd(), "data/amazon_sales/all_sales_data_combined.csv"
         )
-        self.data = pd.read_csv(csv_path)
+        if os.path.exists(csv_path):
+            self.data = pd.read_csv(csv_path)
+        else:
+            raise Exception(f"Path does not exist: {csv_path}")
+        self.add_source_metadata(engine)
+        self.insert_into_db(engine)
 
-    def add_source_metadata(self):
+    def add_source_metadata(self, engine):
         self.source_data = pd.DataFrame(self.data["source_file"].unique())
         self.source_data.rename(
             columns={0: SourceMetaDataTable.source_filename.name}, inplace=True
@@ -44,7 +51,7 @@ class AmazonSalesSourceIngestor(BaseIngestor):
             index=False,
         )
 
-    def insert_into_db(self):
+    def insert_into_db(self, engine):
         self.data = self.data.merge(
             self.source_data,
             how="inner",
