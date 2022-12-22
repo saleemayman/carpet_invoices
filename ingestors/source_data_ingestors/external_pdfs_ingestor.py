@@ -13,7 +13,7 @@ from database.tables import (
     ExternalPDFInvoiceItems,
 )
 
-# from database.base import engine
+from database.base import engine
 from definitions.schemas import Schemas
 
 from definitions.common import (
@@ -34,13 +34,12 @@ logger = logging.getLogger()
 
 
 class ExternalInvoicesReimbursementsIngestor(BaseIngestor):
-    file_type = None
     header_table_name = ""
     item_table_name = ""
     source_type = SourceTypes.extracted_pdf_csv.value
     source_name = SourceNames.carpets_external.value
 
-    def __init__(self, *, file_type: Union["RE", "GS"], engine):
+    def __init__(self, *, file_type: Union["RE", "GS"]):
         self.file_type = file_type
         if not self.file_type or self.file_type not in ["RE", "GS"]:
             raise Exception(
@@ -66,24 +65,11 @@ class ExternalInvoicesReimbursementsIngestor(BaseIngestor):
                 )
                 monthly_pdf_invoices.append(monthly_df)
         all_pdf_invoices = pd.concat(monthly_pdf_invoices, ignore_index=True)
-
-        print(
-            CreateTable(SourceMetaDataTable.__table__).compile(
-                dialect=postgresql.dialect()
-            )
-        )
-        print(
-            CreateTable(ExternalPDFReimbursementHeaders.__table__).compile(
-                dialect=postgresql.dialect()
-            )
-        )
-
         self._separate_headers_and_items(all_pdf_invoices)
-        self.add_source_metadata(engine)
-        self.insert_into_db(engine)
+        self.add_source_metadata()
+        self.insert_into_db()
 
     def _separate_headers_and_items(self, pdf_invoices: pd.DataFrame):
-        print(f"pdf_invoices.columns: {pdf_invoices.columns}")
         if self.file_type == "RE":
             pdf_invoices["internal_id"] = pdf_invoices[InvoiceHeaderTableColumns].apply(
                 lambda row: create_int_hash_from_df_row(row), axis=1
@@ -101,7 +87,7 @@ class ExternalInvoicesReimbursementsIngestor(BaseIngestor):
             ].drop_duplicates()
             self.data_items = pdf_invoices[ReimbursementItemTableColumns].copy()
 
-    def add_source_metadata(self, engine):
+    def add_source_metadata(self):
         self.source_data = pd.DataFrame(self.data_headers["foldername"].unique())
         self.source_data.rename(
             columns={0: SourceMetaDataTable.source_filename.name}, inplace=True
@@ -120,7 +106,7 @@ class ExternalInvoicesReimbursementsIngestor(BaseIngestor):
             index=False,
         )
 
-    def insert_into_db(self, engine):
+    def insert_into_db(self):
         self.data_headers = self.data_headers.merge(
             self.source_data,
             how="inner",

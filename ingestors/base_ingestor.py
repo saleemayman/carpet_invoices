@@ -6,10 +6,13 @@ from definitions.common import SourceTypes, SourceNames
 
 @dataclass
 class BaseIngestor:
-    # table_name: str
     source_type: SourceTypes
     source_name: SourceNames
 
     @abstractmethod
     def add_source_metadata():
+        pass
+
+    @abstractmethod
+    def insert_into_db():
         pass

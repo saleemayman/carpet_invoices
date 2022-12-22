@@ -10,6 +10,9 @@ class SourceNames(Enum):
     amazon_aws = "amazon_aws"
     carpets_external = "carpets_external"
 
+class ExternalDocumentType(Enum):
+    invoice = "invoice"
+    reimbursement = "reimbursement"
 
 InvoiceHeaderTableColumns = [
     "invoice_number",
