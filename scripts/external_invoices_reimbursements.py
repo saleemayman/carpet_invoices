@@ -9,8 +9,9 @@ import warnings
 from dataclasses import dataclass
 
 import pandas as pd
+
 import pypdfium2 as pdfium
-from scripts.constants import (
+from constants import (
     MONTHLY_INVOICE_COLUMN_MAPPING,
     MONTHLY_REIMBURSEMENT_COLUMN_MAPPING,
     invoice_date_regx,
@@ -36,7 +37,7 @@ from utils.common import create_int_hash_from_df_row
 
 import logging
 
-logger = logging.getLogger()
+logger = logging.getLogger("root")
 
 INVOICES_DIR = "/home/as/work/tara_data_backup/TaraCarpetRugs/Rechnungen_TaraCarpet"
 
@@ -93,7 +94,7 @@ def parse_external_invoices_folder() -> dict:
             }
         else:
             folders_metadata[folder_path_name] = {}
-            print(f"Unexpected folder path: {folder}")
+            logger.warning(f"Unexpected folder path: {folder}")
     return folders_metadata
 
 
@@ -104,7 +105,7 @@ def parse_invoice_reimbursement_info_from_filename(folder_name: str, pdf_filenam
     elif "GS" in folder_name:
         reimbursement_nr = reimbursement_nr_regx.findall(pdf_filename)[0]
     else:
-        print(
+        logger.warning(
             f"Not a valid directory. Not a invoice/reimbursement PDFs folder: {folder_name}"
         )
     if amazon_order_nr_regx.match(pdf_filename):
@@ -117,7 +118,7 @@ def parse_invoice_reimbursement_info_from_filename(folder_name: str, pdf_filenam
         order_nr = au_order_nr_regx.findall(pdf_filename)[0]
     else:
         order_nr = None
-        print(
+        logger.warning(
             "Unexpected PDF filename. Cannot find Order Nr in "
             f"filename: {pdf_filename}"
         )
@@ -184,7 +185,7 @@ def get_invoice_reimbursement_table_from_extracted_text(
     file_name: str,
     pdf_text: List[str],
 ):
-    print(f"Parsing: {file_name}")
+    logger.info(f"Parsing: {file_name}")
     if "Rechnung" in pdf_text:
         heading_start_index = pdf_text.index("Rechnung")
     elif "RECHNUNGSKORREKTUR" in pdf_text:
@@ -207,7 +208,6 @@ def get_invoice_reimbursement_table_from_extracted_text(
     vat_amount = None
     total_amount = None
     for row_index, row in enumerate(main_data_as_text):
-        # print(f"row {table_rows}")
         if (
             invoice_reimbursement_date is not None
             and net_total_amount is not None
@@ -217,12 +217,10 @@ def get_invoice_reimbursement_table_from_extracted_text(
             is_file_totaled = True
         if invoice_date_regx.match(row):
             invoice_reimbursement_date = invoice_date_regx.findall(row)[0]
-            # print(f"1.0")
             continue
         if re.match(r"^Pos\.\sMenge", row, re.IGNORECASE) and not data_table_complete:
             data_table_started = True
             is_invoice_item_complete = False
-            # print(f"2.0")
             continue
         if data_table_started and not data_table_complete:
             if standard_row_all_7_columns_regx.match(row):
@@ -243,14 +241,12 @@ def get_invoice_reimbursement_table_from_extracted_text(
                     }
                 )
                 is_invoice_item_complete = True
-                # print(f"3.1")
                 continue
             if incomplete_row_4_columns_regx.match(row):
                 incomplete_columns_values = incomplete_row_4_columns_regx.findall(row)[
                     0
                 ]
                 is_invoice_item_complete = False
-                # print(f"3.1.2")
             if not is_invoice_item_complete:
                 if (
                     remaining_description_row_regx.match(row)
@@ -258,7 +254,6 @@ def get_invoice_reimbursement_table_from_extracted_text(
                     and not incomplete_row_last_3_columns_regx.match(row)
                 ):
                     remaining_description_column_value = row
-                    # print(f"3.2")
                     continue
                 if incomplete_row_last_3_columns_regx.match(row):
                     last_3_columns_values = incomplete_row_last_3_columns_regx.findall(
@@ -285,7 +280,6 @@ def get_invoice_reimbursement_table_from_extracted_text(
                         }
                     )
                     is_invoice_item_complete = True
-                    # print(f"last 3 columns done")
                     continue
             if neither_article_nor_description_in_row_regx.match(row):
                 columns_values = neither_article_nor_description_in_row_regx.findall(
@@ -307,7 +301,6 @@ def get_invoice_reimbursement_table_from_extracted_text(
                     }
                 )
                 is_invoice_item_complete = True
-                # print(f"3.6")
                 continue
             if only_article_or_description_in_row_regx.match(row):
                 columns_values = only_article_or_description_in_row_regx.findall(row)[0]
@@ -327,7 +320,6 @@ def get_invoice_reimbursement_table_from_extracted_text(
                     }
                 )
                 is_invoice_item_complete = True
-                # print(f"3.5")
                 continue
             if invoice_net_total_regx.match(row):
                 net_total_amount = float(
@@ -336,7 +328,6 @@ def get_invoice_reimbursement_table_from_extracted_text(
                     .replace(",", ".")
                 )
                 data_table_complete = True
-                # print(f"net_total_amount-data_table_complete")
                 continue
         if data_table_complete:
             if invoice_net_total_regx.match(row):
@@ -345,13 +336,11 @@ def get_invoice_reimbursement_table_from_extracted_text(
                     .replace(".", "")
                     .replace(",", ".")
                 )
-                # print(f"net_total_amount")
                 continue
             if vat_amount_regx.match(row):
                 vat_amount = float(
                     vat_amount_regx.findall(row)[0].replace(".", "").replace(",", ".")
                 )
-                # print(f"vat_amount")
                 continue
             if invoice_total_regx.match(row):
                 total_amount = float(
@@ -359,13 +348,10 @@ def get_invoice_reimbursement_table_from_extracted_text(
                     .replace(".", "")
                     .replace(",", ".")
                 )
-                # print(f"total_amount")
             if is_file_totaled:
                 invoice_reimbursement_notes.append(row)
-                # print(f"parser: invoice_reimbursement_notes: {invoice_reimbursement_notes}")
     if data_table_complete and is_file_totaled:
         table_rows_df = pd.DataFrame(table_rows)
-        # print(f"table complete. num rows: {len(table_rows_df)}, df: {table_rows_df.to_string()}")
         data_sum_of_total = table_rows_df["total_price"].sum()
         notes = [
             note
@@ -481,7 +467,7 @@ def parse_monthly_pdfs_in_folder(folder_name: str, list_of_files: list):
             )
             invoice_tables_list.append(table_data)
         else:
-            print(f"Not parsing non PDF file: {file_name}")
+            logger.info(f"Not parsing non PDF file: {file_name}")
     # combine all DFs and save as CSV
     if len(invoice_tables_list) > 0:
         combined_data = pd.concat(invoice_tables_list)
@@ -503,13 +489,20 @@ def parse_monthly_pdfs_in_folder(folder_name: str, list_of_files: list):
 
 
 def parse_monthly_parent_folder(folder_name: str, list_of_files: List[str]):
+    numeric_columns = [
+        "total",
+        "total_order",
+        "total_payment_amount",
+        "total_invoice_correction",
+        "credit_voucher",
+    ]
     def save_invoice_reimbursement_data_as_clean_csv(
         folder: str,
         file: str,
         monthly_df: pd.DataFrame,
     ):
         file = file.replace(" ", "_").replace("-", "")
-        print(f"""File columns: {"_".join(sorted(monthly_df.columns))}""")
+        logger.info(f"""File columns: {"_".join(sorted(monthly_df.columns))}""")
         if "rgexport" in file.lower():
             monthly_df.columns = [column.strip() for column in monthly_df.columns]
             monthly_df.rename(columns=MONTHLY_INVOICE_COLUMN_MAPPING, inplace=True)
@@ -522,9 +515,12 @@ def parse_monthly_parent_folder(folder_name: str, list_of_files: List[str]):
                 MONTHLY_REIMBURSEMENT_COLUMN_MAPPING.values()
             ].copy()
         else:
-            print(
+            logger.warning(
                 f"Unknown file type. Should be invoice or reimbursement. File: {file}"
             )
+        for column in monthly_df.columns:
+            if column in numeric_columns and monthly_df[column].dtype in [str, object]:
+                monthly_df[column] = monthly_df[column].str.replace(".", "").str.replace(",", ".").astype(float)
         # create hash for each row from all concatenated column values in the row.
         monthly_df["hash_id"] = monthly_df.apply(
             lambda row: create_int_hash_from_df_row(row), axis=1
@@ -543,7 +539,7 @@ def parse_monthly_parent_folder(folder_name: str, list_of_files: List[str]):
     for filename in list_of_files:
         file_path = os.path.join(INVOICES_DIR, folder_name, filename)
         if "rgexport" in filename.lower() or "gsexport" in filename.lower():
-            print(f"Will be reading monthly file at: {file_path}")
+            logger.info(f"Will be reading monthly file at: {file_path}")
             if ".xl" in filename.lower():
                 monthly_invoice = pd.read_excel(
                     file_path,
@@ -571,15 +567,15 @@ def parse_monthly_parent_folder(folder_name: str, list_of_files: List[str]):
                     f"Invoice or reimbursement file neither Excel nor CSV. File: {filename}"
                 )
         else:
-            print(f"Unknown filename: {filename}. Not parsing.")
+            logger.warning(f"Unknown filename: {filename}. Not parsing.")
 
 
 if __name__ == "__main__":
     folders_metadata = parse_external_invoices_folder()
-    print(f"folders_metadata.keys: {folders_metadata.keys()}")
+    logger.info(f"folders_metadata.keys: {folders_metadata.keys()}")
     for folder_identifier, folder_metadata in folders_metadata.items():
         if len(folder_identifier) > 0 and "archive" not in folder_identifier:
-            print(
+            logger.info(
                 f"""folder: {folder_identifier}, num_files: {folder_metadata["num_files"]}"""
             )
             if folder_identifier:

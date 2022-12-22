@@ -2,14 +2,7 @@ import os
 import re
 import sys
 
-from os.path import dirname
-
-
-def set_python_path():
-    sys.path.append(dirname(dirname(dirname(__file__))))
-
-
-PARENT_DIR = os.path.abspath(os.pardir)  # tara/
+PARENT_DIR = os.path.abspath(os.pardir)
 AMAZON_SALES_DATA_DIR = os.path.join(
     os.getcwd(), "../tara_data_backup", "TaraCarpetRugs", "Transaktionen_Amazon"
 )

@@ -30,10 +30,10 @@ from ingestors.base_ingestor import BaseIngestor
 
 import logging
 
-logger = logging.getLogger()
+logger = logging.getLogger("root")
 
 
-class ExternalInvoicesReimbursementsIngestor(BaseIngestor):
+class ExternalPDFInvoicesReimbursementsIngestor(BaseIngestor):
     header_table_name = ""
     item_table_name = ""
     source_type = SourceTypes.extracted_pdf_csv.value
@@ -45,7 +45,9 @@ class ExternalInvoicesReimbursementsIngestor(BaseIngestor):
             raise Exception(
                 f"Cannot create ingestor without correct type: {self.file_type}"
             )
-        print(f"Starting data ingestor for External data of type: {self.file_type}...")
+        logger.info(
+            f"Starting data ingestor for External data of type: {self.file_type}..."
+        )
         self.header_table_name = (
             ExternalPDFInvoiceHeaders.__tablename__
             if self.file_type == "RE"

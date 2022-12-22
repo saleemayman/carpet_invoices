@@ -10,12 +10,10 @@ def drop_and_create_all_schemas():
     Drops all schemas as defined in Schemas Enum and recreates them fresh.
     """
     for schema in Schemas:
-        print(f"Dropping schema: {schema}")
         with engine.connect() as conn:
             conn.execute(f"DROP SCHEMA IF EXISTS {schema.value} CASCADE;")
 
     for schema in Schemas:
-        print(f"Creating schema: {schema}")
         with engine.connect() as conn:
             conn.execute(f"CREATE SCHEMA {schema.value};")
 

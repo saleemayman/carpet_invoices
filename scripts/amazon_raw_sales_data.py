@@ -32,14 +32,13 @@ def parse_sales_data_from_amazon_csvs() -> dict:
         country_sales_data = {}
         country_sales_data["files"] = {}
 
-        print(f"Parsing CSVs for country: {country_code}")
-        logging.info(f"Parsing CSVs for country: {country_code} in: {folder_path}")
+        logger.info(f"Parsing CSVs for country: {country_code} in: {folder_path}")
 
         csv_files_count = 0
         for country_filename in os.listdir(folder_path):
             if ".DS_Store" in country_filename:
                 continue
-            print(f"\tFile: {country_filename}")
+            logger.info(f"\tFile: {country_filename}")
 
             data = pd.read_csv(
                 os.path.join(AMAZON_SALES_DATA_DIR, folder_path, country_filename),
@@ -178,14 +177,13 @@ if __name__ == "__main__":
         all_global_data_list.append(data["all_data"])
     all_global_data_df = pd.concat(all_global_data_list, ignore_index=True)
 
-    logging.info(f"Final DF column counts: {all_global_data_df.count()}")
-    print(f"Final DF column counts: {all_global_data_df.count()}")
+    logger.info(f"Final DF column counts: {all_global_data_df.count()}")
 
     all_global_data_df["hash_id"] = all_global_data_df.apply(
         lambda row: create_int_hash_from_df_row(row), axis=1
     )
     output_csv_path = os.path.join(os.getcwd(), "data", "amazon_sales", filename)
-    print(f"Saving file to: {output_csv_path}")
+    logger.info(f"Saving file to: {output_csv_path}")
     all_global_data_df[needed_columns].to_csv(
         path_or_buf=output_csv_path,
         index=False,

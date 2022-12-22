@@ -10,26 +10,38 @@ from database.base import engine
 
 from ingestors.source_data_ingestors.amazon_sales_data import AmazonSalesSourceIngestor
 from ingestors.source_data_ingestors.external_pdfs_ingestor import (
-    ExternalInvoicesReimbursementsIngestor,
+    ExternalPDFInvoicesReimbursementsIngestor,
+)
+from ingestors.source_data_ingestors.external_invoices_ingestor import ExternalInvoicesReimbursementsIngestor
+from ingestors.source_data_ingestors.remissions_from_amazon_ingestor import (
+    ReturnsFromAmazonIngestor,
+)
+from ingestors.source_data_ingestors.article_shipment_info_ingestor import (
+    ArticleShipmentInfoIngestor,
 )
 
 import logging
+
 logging.basicConfig(
     format="%(asctime)s: %(message)s",
     level=logging.INFO,
-    datefmt="%H:%M:%S",
     stream=sys.stderr,
 )
-logger = logging.getLogger(__file__)
+logger = logging.getLogger("root")
 
-# logger = logging.getLogger()
 
 def setup():
+    logger.info("Initialising database...")
+
     init_db()
 
     AmazonSalesSourceIngestor()
+    ExternalPDFInvoicesReimbursementsIngestor(file_type="RE")
+    ExternalPDFInvoicesReimbursementsIngestor(file_type="GS")
     ExternalInvoicesReimbursementsIngestor(file_type="RE")
     ExternalInvoicesReimbursementsIngestor(file_type="GS")
+    ReturnsFromAmazonIngestor()
+    ArticleShipmentInfoIngestor()
 
     db_session.commit()
 
