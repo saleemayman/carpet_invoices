@@ -2,16 +2,15 @@ import os
 import re
 import datetime
 import math
-from typing import List, Optional
+from typing import List
 from pathlib import Path
 import warnings
 
-from dataclasses import dataclass
 
 import pandas as pd
 
 import pypdfium2 as pdfium
-from constants import (
+from scripts.constants import (
     MONTHLY_INVOICE_COLUMN_MAPPING,
     MONTHLY_REIMBURSEMENT_COLUMN_MAPPING,
     invoice_date_regx,
@@ -84,8 +83,8 @@ def parse_external_invoices_folder() -> dict:
     for folder in invoices_data_folders:
         path_items = folder.split("/")
         starting_location = path_items.index("Rechnungen_TaraCarpet")
-        folder_path_name = "/".join(path_items[starting_location + 1 :])
-        path_identifiers = path_items[starting_location + 1 :]  # starting+1 till end
+        folder_path_name = "/".join(path_items[starting_location + 1:])
+        path_identifiers = path_items[starting_location + 1:]  # starting+1 till end
         folder_files = os.listdir(folder)
         if len(path_identifiers) > 0 and len(path_identifiers) < 3:
             folders_metadata[folder_path_name] = {
@@ -496,6 +495,7 @@ def parse_monthly_parent_folder(folder_name: str, list_of_files: List[str]):
         "total_invoice_correction",
         "credit_voucher",
     ]
+
     def save_invoice_reimbursement_data_as_clean_csv(
         folder: str,
         file: str,
@@ -520,7 +520,12 @@ def parse_monthly_parent_folder(folder_name: str, list_of_files: List[str]):
             )
         for column in monthly_df.columns:
             if column in numeric_columns and monthly_df[column].dtype in [str, object]:
-                monthly_df[column] = monthly_df[column].str.replace(".", "").str.replace(",", ".").astype(float)
+                monthly_df[column] = (
+                    monthly_df[column]
+                    .str.replace(".", "")
+                    .str.replace(",", ".")
+                    .astype(float)
+                )
         # create hash for each row from all concatenated column values in the row.
         monthly_df["hash_id"] = monthly_df.apply(
             lambda row: create_int_hash_from_df_row(row), axis=1

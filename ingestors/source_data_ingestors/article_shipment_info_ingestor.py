@@ -1,8 +1,5 @@
 import os
-from typing import Union
 
-import datetime
-import csv
 import pandas as pd
 
 from database.tables import (
@@ -39,7 +36,7 @@ class ArticleShipmentInfoIngestor(BaseIngestor):
         if not os.path.exists(csv_path):
             raise Exception(f"Path does not exist: {csv_path}")
 
-        logger.info(f"Starting data ingestor for Article shipment price info...")
+        logger.info("Starting data ingestor for Article shipment price info...")
         self.data = pd.read_csv(csv_path, encoding="utf-16")
         self.data.rename(columns=ArticleShipmentInfoColumnMapping, inplace=True)
         self.add_source_metadata()

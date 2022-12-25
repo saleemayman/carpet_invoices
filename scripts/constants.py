@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 
 PARENT_DIR = os.path.abspath(os.pardir)
 AMAZON_SALES_DATA_DIR = os.path.join(

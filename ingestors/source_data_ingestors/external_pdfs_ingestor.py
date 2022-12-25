@@ -2,8 +2,6 @@ import os
 from typing import Union
 import pandas as pd
 
-from sqlalchemy.schema import CreateTable
-from sqlalchemy.dialects import postgresql
 
 from database.tables import (
     SourceMetaDataTable,

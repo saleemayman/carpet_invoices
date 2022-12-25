@@ -1,7 +1,5 @@
 import pytest
 
-import pandas as pd
-
 from scripts.external_invoices_reimbursements import (
     get_invoice_reimbursement_table_from_extracted_text,
 )
@@ -40,7 +38,7 @@ def extracted_pdf_text():
         "19% 88,88 88,88",
         "5 1 19% 0,00 0,00",
         "6 1 Versand 19% 10,00 10,00",
-        "Gesamt Netto (19,00%) € 111,99",
+        "Gesamt Netto (19,00%) € 111,99 (19,00%)",
         "zzgl. 19,00% MwSt. € 21,28",
         "Gesamtbetrag € 133,27",
         "Ihre Ust-ID: DE310123456",

@@ -1,5 +1,4 @@
 import os
-import logging
 import pandas as pd
 
 from database.tables import AmazonSalesTable, SourceMetaDataTable
@@ -13,7 +12,6 @@ from utils.common import create_int_hash_from_df_row
 from ingestors.base_ingestor import BaseIngestor
 
 import logging
-
 logger = logging.getLogger("root")
 
 

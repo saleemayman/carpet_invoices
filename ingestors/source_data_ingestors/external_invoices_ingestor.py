@@ -2,8 +2,6 @@ import os
 from typing import Union
 import pandas as pd
 
-from sqlalchemy.schema import CreateTable
-from sqlalchemy.dialects import postgresql
 
 from database.tables import (
     SourceMetaDataTable,
@@ -32,7 +30,7 @@ class ExternalInvoicesReimbursementsIngestor(BaseIngestor):
     source_name = SourceNames.carpets_external.value
 
     def __init__(self, *, file_type: Union["RE", "GS"]):
-        logger.info(f"Starting ingestor for External invoices of type...")
+        logger.info(f"Starting ingestor for External invoices of type: {file_type} ...")
         self.file_type = file_type
         if not self.file_type or self.file_type not in ["RE", "GS"]:
             raise Exception(

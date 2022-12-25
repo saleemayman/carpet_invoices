@@ -1,8 +1,6 @@
 import os
-from typing import Union
 
 import datetime
-import csv
 import pandas as pd
 
 from database.tables import (
@@ -16,10 +14,6 @@ from definitions.schemas import Schemas
 from definitions.common import (
     SourceTypes,
     SourceNames,
-    InvoiceHeaderTableColumns,
-    ReimbursementHeaderTableColumns,
-    InvoiceItemTableColumns,
-    ReimbursementItemTableColumns,
 )
 from utils.common import create_int_hash_from_df_row
 
@@ -41,7 +35,7 @@ class ReturnsFromAmazonIngestor(BaseIngestor):
         )
         if not os.path.exists(csv_path):
             raise Exception(f"Path does not exist: {csv_path}")
-        logger.info(f"Starting data ingestor for remissions from Amazon data...")
+        logger.info("Starting data ingestor for remissions from Amazon data...")
         self._read_and_transform_data(csv_path)
         self.add_source_metadata()
         self.insert_into_db()
