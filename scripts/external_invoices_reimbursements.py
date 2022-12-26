@@ -83,8 +83,8 @@ def parse_external_invoices_folder() -> dict:
     for folder in invoices_data_folders:
         path_items = folder.split("/")
         starting_location = path_items.index("Rechnungen_TaraCarpet")
-        folder_path_name = "/".join(path_items[starting_location + 1:])
-        path_identifiers = path_items[starting_location + 1:]  # starting+1 till end
+        folder_path_name = "/".join(path_items[starting_location + 1 :])
+        path_identifiers = path_items[starting_location + 1 :]  # starting+1 till end
         folder_files = os.listdir(folder)
         if len(path_identifiers) > 0 and len(path_identifiers) < 3:
             folders_metadata[folder_path_name] = {
@@ -429,7 +429,8 @@ def add_metadata_to_extracted_data(
         ]
     else:
         raise Exception(
-            f"Unknown folder type: {folder}. Cannot add invoice/reimbursement Nr. from filename."
+            f"Unknown folder type: {folder}. "
+            "Cannot add invoice/reimbursement Nr. from filename."
         )
     table_data["order_number_filename"] = file_metadata["order_nr"]
     table_data["invoice_number"] = extracted_data["extracted_metadata"][
@@ -507,6 +508,13 @@ def parse_monthly_parent_folder(folder_name: str, list_of_files: List[str]):
             monthly_df.columns = [column.strip() for column in monthly_df.columns]
             monthly_df.rename(columns=MONTHLY_INVOICE_COLUMN_MAPPING, inplace=True)
             monthly_df = monthly_df[MONTHLY_INVOICE_COLUMN_MAPPING.values()].copy()
+            # filter out last row from each file where the monthly total is.
+            exclusion_filter = (
+                monthly_df["platform"].isna()
+                & monthly_df["currency"].isna()
+                & monthly_df["total"].notnull()
+            )
+            monthly_df = monthly_df[~exclusion_filter].copy()
         elif "gsexport" in file.lower():
             monthly_df.rename(
                 columns=MONTHLY_REIMBURSEMENT_COLUMN_MAPPING, inplace=True
@@ -514,6 +522,13 @@ def parse_monthly_parent_folder(folder_name: str, list_of_files: List[str]):
             monthly_df = monthly_df[
                 MONTHLY_REIMBURSEMENT_COLUMN_MAPPING.values()
             ].copy()
+            # filter out last row from each file where the monthly total is.
+            exclusion_filter = (
+                monthly_df["platform"].isna()
+                & monthly_df["currency"].isna()
+                & monthly_df["total_invoice_correction"].notnull()
+            )
+            monthly_df = monthly_df[~exclusion_filter].copy()
         else:
             logger.warning(
                 f"Unknown file type. Should be invoice or reimbursement. File: {file}"
