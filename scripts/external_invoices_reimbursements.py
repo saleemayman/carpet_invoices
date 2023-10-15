@@ -38,7 +38,7 @@ import logging
 
 logger = logging.getLogger("root")
 
-INVOICES_DIR = "/home/as/work/tara_data_backup/TaraCarpetRugs/Rechnungen_TaraCarpet"
+INVOICES_DIR = "data/data_backup/CarpetRugs/Rechnungen_Carpet"
 
 
 INVOICE_TABLE_COLUMNS = {
@@ -82,7 +82,7 @@ def parse_external_invoices_folder() -> dict:
     folders_metadata = {}
     for folder in invoices_data_folders:
         path_items = folder.split("/")
-        starting_location = path_items.index("Rechnungen_TaraCarpet")
+        starting_location = path_items.index("Rechnungen_Carpet")
         folder_path_name = "/".join(path_items[starting_location + 1 :])
         path_identifiers = path_items[starting_location + 1 :]  # starting+1 till end
         folder_files = os.listdir(folder)

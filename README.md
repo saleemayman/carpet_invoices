@@ -21,11 +21,18 @@ git clone https://github.com/saleemayman/carpet_invoices.git
 
 2. `cd` into the cloned repo: `cd carpet_invoices`.
 
-3. Copy Amazon sales data (from where?) with the following columns as a CSV file inside the
-folders `carpet_invoices/data/amazon_sales`. Name the csv as `all_sales_data.csv`.
+3. Consolidate country wise AMZ sales data into a single and formatted CSV file using:
+```
+make amazon-data
+```
 
-4. From root (`carpet_invoices`) run: `make ingestor` to start the DB and load data into it.
+4. Consolidate all monthly external invoices into a single CSV and parse the corresponding invoice and reimbursement PDFs for items the invoice/reimbursement was issued for using:
+```
+make external-data
+```
+
+5. From root (`carpet_invoices`) run: `make ingestor` to start the DB and load data into it.
 This will first create the `postgres` database service and once its ready, the `ingestor` service will load data into it and terminate.
 
-5. To start the Metabase dashboard, run: `make dashboard`. Once the service starts running,
+6. To start the Metabase dashboard, run: `make dashboard`. Once the service starts running,
 check it in a web browser at: `localhost:3000`.
